@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import styled from '@emotion/styled';
 import { Link } from 'react-router-dom';
-import Swal from 'sweetalert2';  // Import SweetAlert
+import Swal from 'sweetalert2';
 import {
   Table,
   TableBody,
@@ -26,13 +26,13 @@ const Client = () => {
   });
   const [selectedClient, setSelectedClient] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [filter, setFilter] = useState('');
 
   useEffect(() => {
     const fetchClients = async () => {
       try {
         const response = await axios.get('http://localhost:8080/clients', { mode: 'cors' });
         setClients(response.data);
-        //console.log('Fetched clients:', response.data);
       } catch (error) {
         console.error('Error fetching Clients:', error);
       }
@@ -40,6 +40,7 @@ const Client = () => {
 
     fetchClients();
   }, []);
+
   const handleDelete = async (cin, name) => {
     const confirmDelete = await Swal.fire({
       title: 'Are you sure you want to delete?',
@@ -50,7 +51,7 @@ const Client = () => {
       cancelButtonColor: '#3085d6',
       confirmButtonText: 'Yes, delete it!',
     });
-  
+
     if (confirmDelete.isConfirmed) {
       try {
         await axios.delete(`http://localhost:8080/clients/${cin}`, { mode: 'cors' });
@@ -81,20 +82,16 @@ const Client = () => {
 
   const handleSaveChanges = async () => {
     try {
-      //console.log('Request Data:', selectedClient);
       await axios.put(`http://localhost:8080/clients/${selectedClient.cin}`, selectedClient, {
         mode: 'cors',
       });
       const updatedResponse = await axios.get('http://localhost:8080/clients', { mode: 'cors' });
-      //showSuccessAlert('Client updated successfully!');  // Error resizeObserver
       setClients(updatedResponse.data);
       setIsModalOpen(false);
     } catch (error) {
       console.error('Error updating client:', error);
-      showErrorAlert('Error updating Client!');  // Show success alert
-
+      showErrorAlert('Error updating Client!');
     }
-
   };
 
   const handleInputChange = (e) => {
@@ -104,8 +101,7 @@ const Client = () => {
 
   const handleAddClient = async () => {
     if (!newClient.adress || !newClient.cin || !newClient.lastName || !newClient.firstName) {
-      showErrorAlert('Missing data !!!');  // Show success alert
-      //window.alert('Your fields are empty!');
+      showErrorAlert('Missing data !!!');
       return;
     }
     try {
@@ -118,11 +114,22 @@ const Client = () => {
         lastName: '',
         adress: '',
       });
-      showSuccessAlert('Client inserted successfully!');  // Show success alert
+      showSuccessAlert('Client inserted successfully!');
     } catch (error) {
       console.error('Error adding client:', error);
     }
   };
+
+  const handleFilterChange = (e) => {
+    setFilter(e.target.value);
+  };
+
+  const filteredClients = clients.filter((client) => {
+    const fullName = `${client.firstName} ${client.lastName}`.toLowerCase();
+    const address = client.adress.toLowerCase();
+    const filterLower = filter.toLowerCase();
+    return fullName.includes(filterLower) || address.includes(filterLower);
+  });
 
   const showSuccessAlert = (message) => {
     Swal.fire({
@@ -131,6 +138,7 @@ const Client = () => {
       text: message,
     });
   };
+
   const showErrorAlert = (message) => {
     Swal.fire({
       icon: 'error',
@@ -140,9 +148,9 @@ const Client = () => {
   };
 
   return (
-    <div>
+    <Container>
       <h2>Add New Client</h2>
-      <div>
+      <FormContainer>
         <TextField
           label="CIN"
           variant="outlined"
@@ -151,8 +159,6 @@ const Client = () => {
           onChange={handleInputChange}
           required
         />
-      </div>
-      <div>
         <TextField
           label="First Name"
           variant="outlined"
@@ -161,8 +167,6 @@ const Client = () => {
           onChange={handleInputChange}
           required
         />
-      </div>
-      <div>
         <TextField
           label="Last Name"
           variant="outlined"
@@ -171,8 +175,6 @@ const Client = () => {
           onChange={handleInputChange}
           required
         />
-      </div>
-      <div>
         <TextField
           label="Address"
           variant="outlined"
@@ -181,25 +183,31 @@ const Client = () => {
           onChange={handleInputChange}
           required
         />
-      </div>
-      <Button variant="contained" color="primary" onClick={handleAddClient}>
-        Add Client
-      </Button>
+        <Button variant="contained" color="primary" onClick={handleAddClient}>
+          Add Client
+        </Button>
+      </FormContainer>
 
       <h2>Clients</h2>
-      <TableContainer component={Paper}>
+      <TextField
+        label="Filter"
+        variant="outlined"
+        value={filter}
+        onChange={handleFilterChange}
+      />
+      <StyledTableContainer component={Paper}>
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>CIN</TableCell>
-              <TableCell>Name</TableCell>
-              <TableCell>Prenom</TableCell>
-              <TableCell>Address</TableCell>
-              <TableCell>Actions</TableCell>
+              <StyledTableCell>CIN</StyledTableCell>
+              <StyledTableCell>Name</StyledTableCell>
+              <StyledTableCell>Prenom</StyledTableCell>
+              <StyledTableCell>Address</StyledTableCell>
+              <StyledTableCell>Actions</StyledTableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {clients.map((client) => (
+            {filteredClients.map((client) => (
               <TableRow key={client.cin}>
                 <TableCell>{client.cin}</TableCell>
                 <TableCell>{client.firstName}</TableCell>
@@ -214,9 +222,9 @@ const Client = () => {
                   </Button>
                   <Button
                     variant="contained"
-                    color="secondary" 
+                    color="secondary"
                     component={Link}
-                    to={`/accounts/${client.cin}`}        
+                    to={`/accounts/${client.cin}`}
                   >
                     Show Accounts
                   </Button>
@@ -225,61 +233,73 @@ const Client = () => {
             ))}
           </TableBody>
         </Table>
-      </TableContainer>
+      </StyledTableContainer>
 
       {selectedClient && isModalOpen && (
         <Modal open={isModalOpen} onClose={handleCloseModal}>
           <ModalContent>
             <h2>Edit Client</h2>
-            <div>
-              <TextField
-                label="CIN"
-                variant="outlined"
-                name="cin"
-                value={selectedClient.cin}
-                onChange={handleModalInputChange}
-                disabled
-              />
-            </div>
-            <div>
-              <TextField
-                label="First Name"
-                variant="outlined"
-                name="firstName"
-                value={selectedClient.firstName}
-                onChange={handleModalInputChange}
-              />
-            </div>
-            <div>
-              <TextField
-                label="Last Name"
-                variant="outlined"
-                name="lastName"
-                value={selectedClient.lastName}
-                onChange={handleModalInputChange}
-              />
-            </div>
-            <div>
-              <TextField
-                label="Address"
-                variant="outlined"
-                name="adress"
-                value={selectedClient.adress}
-                onChange={handleModalInputChange}
-              />
-            </div>
-            <Button variant="contained" color="primary" onClick={handleSaveChanges}>
+            <TextField
+              label="CIN"
+              variant="outlined"
+              name="cin"
+              value={selectedClient.cin}
+              onChange={handleModalInputChange}
+              disabled
+            />
+            <TextField
+              label="First Name"
+              variant="outlined"
+              name="firstName"
+              value={selectedClient.firstName}
+              onChange={handleModalInputChange}
+            />
+            <TextField
+              label="Last Name"
+              variant="outlined"
+              name="lastName"
+              value={selectedClient.lastName}
+              onChange={handleModalInputChange}
+            />
+            <TextField
+              label="Address"
+              variant="outlined"
+              name="adress"
+              value={selectedClient.adress}
+              onChange={handleModalInputChange}
+            />
+            <Button variant="contained" color="success" onClick={handleSaveChanges}>
               Save Changes
             </Button>
-            <Button variant="contained" onClick={handleCloseModal}>
+            <Button variant="contained" color="warning" onClick={handleCloseModal}>
               Close
             </Button>
           </ModalContent>
         </Modal>
       )}
-    </div>
+    </Container>
   );
 };
+
+const Container = styled.div`
+  text-align: center;
+  font-family: 'Your Preferred Font', sans-serif;
+`;
+
+const FormContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+`;
+
+const StyledTableContainer = styled(TableContainer)`
+  margin-top: 20px;
+`;
+
+const StyledTableCell = styled(TableCell)`
+  text-align: center;
+`;
 
 const ModalContent = styled.div`
   background-color: #fefefe;

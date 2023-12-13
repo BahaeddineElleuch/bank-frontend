@@ -1,20 +1,40 @@
 import React from 'react';
-import styled from 'styled-components';
 import { Link } from 'react-router-dom';
+import { AppBar, Tab, Tabs, Typography } from '@mui/material';
+import { styled } from '@mui/system';
 
-const NavbarWrapper = styled.div`
-  background-color: #333;
-  padding: 10px;
-  color: white;
-  display: flex;
-  justify-content: space-around;
+const NavbarWrapper = styled(AppBar)`
+  background-color: #1976d2;
+  padding: 10px 20px;
+  .MuiTabs-indicator {
+    background-color: #ffffff;
+  }
+`;
+
+const StyledTab = styled(Tab)`
+  text-align: center; // Center the text content
+  text-transform: none;
+  font-weight: 600;
+  font-size: 16px;
+  color: #ffffff;
+
+  &:hover {
+    color: #ffffff;
+    opacity: 0.8;
+  }
+
+  &.Mui-selected {
+    color: #ffffff;
+  }
 `;
 
 const Navbar = () => {
   return (
-    <NavbarWrapper>
-      <Link to="/client">Client</Link>
-      <Link to="/accounts">Accounts</Link>
+    <NavbarWrapper position="center">
+      <Tabs>
+        <StyledTab label="Client" component={Link} to="/client" />
+        <StyledTab label="Accounts" component={Link} to="/accounts" />
+      </Tabs>
     </NavbarWrapper>
   );
 };
