@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import styled from '@emotion/styled';
+import { Link } from 'react-router-dom'; // Import Link from react-router-dom
 import {
   Table,
   TableBody,
@@ -184,8 +185,11 @@ const Client = () => {
                   <Button variant="contained" color="primary" onClick={() => handleUpdate(client.cin)}>
                     Update
                   </Button>
-                  <Button variant="contained" color="secondary" onClick={() => handleDelete(client.cin)}>
+                  <Button variant="contained" color="error" onClick={() => handleDelete(client.cin)}>
                     Delete
+                  </Button>
+                  <Button variant="contained" color="secondary" component={Link} to={`/accounts/${client.cin}`}>
+                    Show Accounts
                   </Button>
                 </TableCell>
               </TableRow>

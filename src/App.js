@@ -11,6 +11,7 @@ const App = () => {
       <Routes>
         <Route path="/client" element={<Client />} />
         <Route path="/accounts" element={<Accounts />} />
+        <Route path="/accounts/:cin" element={<Accounts />} />
 
       </Routes>
     </Router>
