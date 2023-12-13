@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import styled from '@emotion/styled';
-import { Link } from 'react-router-dom'; // Import Link from react-router-dom
+import { Link } from 'react-router-dom';
+import Swal from 'sweetalert2';  // Import SweetAlert
 import {
   Table,
   TableBody,
@@ -21,7 +22,7 @@ const Client = () => {
     cin: '',
     firstName: '',
     lastName: '',
-    adress: '', // Corrected to match the backend field name
+    adress: '',
   });
   const [selectedClient, setSelectedClient] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -31,7 +32,7 @@ const Client = () => {
       try {
         const response = await axios.get('http://localhost:8080/clients', { mode: 'cors' });
         setClients(response.data);
-        console.log('Fetched clients:', response.data);
+        //console.log('Fetched clients:', response.data);
       } catch (error) {
         console.error('Error fetching Clients:', error);
       }
@@ -39,17 +40,25 @@ const Client = () => {
 
     fetchClients();
   }, []);
-
-  const handleDelete = async (cin) => {
-    const confirmDelete = window.confirm('Are you sure you want to delete this client?');
-
-    if (confirmDelete) {
+  const handleDelete = async (cin, name) => {
+    const confirmDelete = await Swal.fire({
+      title: 'Are you sure you want to delete?',
+      html: `Client Cin: ${cin}`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, delete it!',
+    });
+  
+    if (confirmDelete.isConfirmed) {
       try {
         await axios.delete(`http://localhost:8080/clients/${cin}`, { mode: 'cors' });
-        // Update the clients state by removing the deleted client
         setClients((prevClients) => prevClients.filter((client) => client.cin !== cin));
+        showSuccessAlert('Client deleted successfully!');
       } catch (error) {
         console.error('Error deleting client:', error);
+        showErrorAlert('Error deleting client!');
       }
     }
   };
@@ -72,19 +81,20 @@ const Client = () => {
 
   const handleSaveChanges = async () => {
     try {
-      console.log('Request Data:', selectedClient);
+      //console.log('Request Data:', selectedClient);
       await axios.put(`http://localhost:8080/clients/${selectedClient.cin}`, selectedClient, {
         mode: 'cors',
       });
-      // Fetch the updated list of clients after updating a client
       const updatedResponse = await axios.get('http://localhost:8080/clients', { mode: 'cors' });
+      //showSuccessAlert('Client updated successfully!');  // Error resizeObserver
       setClients(updatedResponse.data);
-      // Close the modal
       setIsModalOpen(false);
     } catch (error) {
-      // Handle errors as before
       console.error('Error updating client:', error);
+      showErrorAlert('Error updating Client!');  // Show success alert
+
     }
+
   };
 
   const handleInputChange = (e) => {
@@ -93,26 +103,40 @@ const Client = () => {
   };
 
   const handleAddClient = async () => {
-    if (!newClient.adress ||!newClient.cin ||!newClient.lastName ||!newClient.firstName ){
-      window.alert('your fields are empty !');
+    if (!newClient.adress || !newClient.cin || !newClient.lastName || !newClient.firstName) {
+      showErrorAlert('Missing data !!!');  // Show success alert
+      //window.alert('Your fields are empty!');
       return;
     }
     try {
-      
       await axios.post('http://localhost:8080/clients', newClient, { mode: 'cors' });
-      // Fetch the updated list of clients after adding a new client
       const response = await axios.get('http://localhost:8080/clients', { mode: 'cors' });
       setClients(response.data);
-      // Reset the new client form
       setNewClient({
         cin: '',
         firstName: '',
         lastName: '',
-        adress: '', // Corrected to match the backend field name
+        adress: '',
       });
+      showSuccessAlert('Client inserted successfully!');  // Show success alert
     } catch (error) {
       console.error('Error adding client:', error);
     }
+  };
+
+  const showSuccessAlert = (message) => {
+    Swal.fire({
+      icon: 'success',
+      title: 'Success',
+      text: message,
+    });
+  };
+  const showErrorAlert = (message) => {
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: message,
+    });
   };
 
   return (
@@ -150,7 +174,7 @@ const Client = () => {
       </div>
       <div>
         <TextField
-          label="adress"
+          label="Address"
           variant="outlined"
           name="adress"
           value={newClient.adress}
@@ -170,7 +194,7 @@ const Client = () => {
               <TableCell>CIN</TableCell>
               <TableCell>Name</TableCell>
               <TableCell>Prenom</TableCell>
-              <TableCell>adress</TableCell>
+              <TableCell>Address</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
@@ -188,7 +212,12 @@ const Client = () => {
                   <Button variant="contained" color="error" onClick={() => handleDelete(client.cin)}>
                     Delete
                   </Button>
-                  <Button variant="contained" color="secondary" component={Link} to={`/accounts/${client.cin}`}>
+                  <Button
+                    variant="contained"
+                    color="secondary" 
+                    component={Link}
+                    to={`/accounts/${client.cin}`}        
+                  >
                     Show Accounts
                   </Button>
                 </TableCell>
@@ -198,7 +227,6 @@ const Client = () => {
         </Table>
       </TableContainer>
 
-      {/* Modal for updating client */}
       {selectedClient && isModalOpen && (
         <Modal open={isModalOpen} onClose={handleCloseModal}>
           <ModalContent>
@@ -210,6 +238,7 @@ const Client = () => {
                 name="cin"
                 value={selectedClient.cin}
                 onChange={handleModalInputChange}
+                disabled
               />
             </div>
             <div>
@@ -232,7 +261,7 @@ const Client = () => {
             </div>
             <div>
               <TextField
-                label="adress"
+                label="Address"
                 variant="outlined"
                 name="adress"
                 value={selectedClient.adress}
@@ -251,6 +280,7 @@ const Client = () => {
     </div>
   );
 };
+
 const ModalContent = styled.div`
   background-color: #fefefe;
   margin: 5% auto;
