@@ -100,8 +100,12 @@ const Client = () => {
   };
 
   const handleAddClient = async () => {
-    if (!newClient.adress || !newClient.cin || !newClient.lastName || !newClient.firstName) {
+    if (!newClient.adress || !newClient.cin || !newClient.lastName || !newClient.firstName ) {
       showErrorAlert('Missing data !!!');
+      return;
+    }
+    if(newClient.cin.length > 8 || newClient.cin.length < 8){
+      showErrorAlert('Wrong CIN !!!');
       return;
     }
     try {

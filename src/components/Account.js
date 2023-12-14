@@ -128,6 +128,11 @@ const Account = () => {
   };
 
   const handleAddAccount = async () => {
+    if (!newAccount.balance || !newAccount.clientCin) {
+      showErrorAlert('Missing data !!!');
+      return;
+    }
+
     try {
       console.log('New Account Data:', newAccount);
       const clientResponse = await axios.get(`http://localhost:8080/clients/${newAccount.clientCin}`, {
@@ -152,17 +157,30 @@ const Account = () => {
           balance: '',
           clientCin: '',
         });
-        toast.success('Account Created');
+        Swal.fire('Account','Account Added','success')
       } else {
+        showErrorAlert("Client not Found");
         console.log('Client Not found');
-        toast.error('Client Not Found !!');
       }
     } catch (error) {
       console.error('Error adding account:', error);
     }
 
   };
-  
+  const showSuccessAlert = (message) => {
+    Swal.fire({
+      icon: 'success',
+      title: 'Account Created',
+      text: message,
+    });
+  };
+  const showErrorAlert = (message) => {
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: message,
+    });
+  };
   return (
     <>
       {cin ? (
@@ -256,7 +274,7 @@ const Account = () => {
         <div>
           <h2>Add New Account</h2>
           <div>
-            <TextField label="RIB" variant="outlined" name="rib" value={newAccount.rib} onChange={handleInputChange} />
+            {/* <TextField label="RIB" variant="outlined" name="rib" value={newAccount.rib} onChange={handleInputChange} //> */}
           </div>
           <div>
             <TextField label="Balance" variant="outlined" name="balance" value={newAccount.balance} onChange={handleInputChange} />
